@@ -1,8 +1,9 @@
 import logging
-import pathlib
 from pathlib import Path
-from telegram import Update, ForceReply
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+
+from telegram import Update
+from telegram.ext import Updater, MessageHandler, Filters, CallbackContext
+
 from bot.date_utils import DateUtil
 
 # Enable logging
@@ -15,25 +16,38 @@ class PhotoBot:
     def __init__(self, root_dir) -> None:
         self._logger = logging.getLogger(__name__)
         self._root_dir = root_dir
+        self._media_group_path_cache = {}
 
     def receiveUpdate(self, update: Update, context: CallbackContext) -> None:
-        self._logger.info(update)
-        if not update.message.caption or not update.message.caption.strip():
-            update.message.reply_text("Нужно указать комментарий")
-            return
 
-        update_file_name, update_file_id, update_comment = None, None, None
+        self._logger.info(update)
+
+        update_file_name, update_file_id = None, None
         if update.message.document:
             update_file_name = update.message.document.file_name
             update_file_id = update.message.document.file_id
+        if not update_file_name or not update_file_id:
+            update.message.reply_text("Нет файлов в сообщении")
+            return
+
+        path = None
+        if hasattr(update.message, 'media_group_id') and not update.message.caption:
+            path = self.getPathForMediaGroup(update.message.media_group_id)
+
+        try:
+            if path:
+                self.downloadFile(context, update_file_id, self.createFullLocalName(path, update_file_name))
+                return
+            if not update.message.caption or not update.message.caption.strip():
+                update.message.reply_text("Нужно указать комментарий")
+                return
             update_comment = update.message.caption.strip()
 
-        if not update_file_name or not update_file_id or not update_comment:
-            return
-        try:
             path = self.makeDirForPost(update_file_name, update_comment)
-            full_local_name = path + "/" + update_file_name
-            self.downloadFile(context, update_file_id, full_local_name)
+            if hasattr(update.message, 'media_group_id'):
+                self.setPathForMediaGroup(update.message.media_group_id, path)
+
+            self.downloadFile(context, update_file_id, self.createFullLocalName(path, update_file_name))
         except DateNotFoundException:
             update.message.reply_text("Не смог найти дату события")
         except FileNotFoundError:
@@ -41,8 +55,13 @@ class PhotoBot:
 
         # update.message.reply_text(update.message.text)
 
+    def createFullLocalName(self, path, update_file_name):
+        full_local_name = path + "/" + update_file_name
+        return full_local_name
+
     def makeDirForPost(self, update_file_name: str, update_comment: str):
 
+        # check group post dir exist
         post_dir = None
         if DateUtil.isStartWithDate(update_comment):
             post_dir = update_comment
@@ -50,9 +69,6 @@ class PhotoBot:
         if not post_dir and DateUtil.isContainRawDate(update_file_name):
             post_dir = DateUtil.makeDateString(update_file_name) + " " + update_comment
 
-        # if not date_part_of_dir:
-        # tryGetDateFromMultipost()
-        #    pass
         if not post_dir:
             raise DateNotFoundException('Date not found in post data')
 
@@ -66,6 +82,12 @@ class PhotoBot:
 
     def downloadFile(self, context, update_file_id, full_local_name):
         context.bot.getFile(update_file_id).download(full_local_name)
+
+    def getPathForMediaGroup(self, media_group_id):
+        return self._media_group_path_cache.get(media_group_id)
+
+    def setPathForMediaGroup(self, media_group_id, path):
+        self._media_group_path_cache[media_group_id] = path
 
 
 class DateNotFoundException(Exception):

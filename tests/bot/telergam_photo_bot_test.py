@@ -1,8 +1,8 @@
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 
 from bot.telegram_photo_bot import PhotoBot
-from tests.bot.test_data import get_test_post_with_document
+from tests.bot.test_data import get_test_post_with_document, get_test_posts_for_multiple_documents_in_one_post
 
 
 class TestPhotoBot(unittest.TestCase):
@@ -13,6 +13,24 @@ class TestPhotoBot(unittest.TestCase):
         self.photo_bot.downloadFile = MagicMock()
         self.context = {}
         self.update = get_test_post_with_document()
+
+    def test_receive_update_multiple_documents_in_one_post_date_from_file(self):
+        # GIVEN
+        first_update = get_test_posts_for_multiple_documents_in_one_post()[0]
+        second_update = get_test_posts_for_multiple_documents_in_one_post()[1]
+        second_update.message.caption = None
+
+        # WHEN
+        self.photo_bot.receiveUpdate(first_update, self.context)
+        self.photo_bot.receiveUpdate(second_update, self.context)
+
+        self.photo_bot.downloadFile.assert_has_calls([call(self.context,
+                                                           first_update.message.document.file_id,
+                                                           self.root_dir + "/2021.10.03 " + first_update.message.caption + "/" + first_update.message.document.file_name),
+                                                      call(self.context,
+                                                           second_update.message.document.file_id,
+                                                           self.root_dir + "/2021.10.03 " + first_update.message.caption + "/" + second_update.message.document.file_name)
+                                                      ])
 
     def test_receive_update_single_document_without_caption(self):
         # GIVEN
