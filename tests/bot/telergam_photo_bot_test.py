@@ -1,51 +1,51 @@
 import unittest
+from unittest.mock import MagicMock
+
 from bot.telegram_photo_bot import PhotoBot
-from unittest.mock import Mock, MagicMock
-from tests.bot.test_util import dict2obj
+from tests.bot.test_data import get_test_post_with_document
 
 
 class TestPhotoBot(unittest.TestCase):
 
-    # def test_receive_update_single_file_without_caption(self):
-    #    self.assertTrue(False)
+    def setUp(self) -> None:
+        self.root_dir = "/tmp/photo"
+        self.photo_bot = PhotoBot(self.root_dir)
+        self.photo_bot.downloadFile = MagicMock()
+        self.context = {}
+        self.update = get_test_post_with_document()
 
-    # def test_receive_update_single_file_with_date_in_file_and_caption(self):
-    #    self.assertTrue(False)
-
-    def test_receive_update_single_file_date_from_file(self):
+    def test_receive_update_single_document_without_caption(self):
         # GIVEN
-
-        root_dir = "/tmp/photo"
-        file_name = 'IMG_20211003_133744.jpg'
-        folder_name = 'Зарядье'
-        update = dict2obj({
-            'message': {
-                'delete_chat_photo': False,
-                'document': {
-                    'file_name': file_name,
-                    'file_id': 'AJSHDFJASHGDFJASHGDFJASHGBFD',
-                    'thumb': {
-                        'height': 320,
-                        'file_id': 'JASDFAKJSHDFKHASKDHFAKSJHFDKAHSD',
-                        'file_size': 12327,
-                        'width': 240,
-                        'file_unique_id': 'AJSDGFJASHDGFJASHGDFJA'
-                    },
-                    'mime_type': 'image/jpeg',
-                    'file_size': 10474747,
-                    'file_unique_id': 'AEYGFAJWHGEFJASGD'
-                },
-                'caption': folder_name
-            },
-
-            'update_id': 462499639
-        })
-        context = {}
-        photo_bot = PhotoBot(root_dir)
-        photo_bot.downloadFile = MagicMock()
+        self.update.message.caption = None
+        self.update.message.reply_text = MagicMock()
 
         # WHEN
-        photo_bot.receiveUpdate(update, context)
+        self.photo_bot.receiveUpdate(self.update, self.context)
 
         # THEN
-        photo_bot.downloadFile.assert_called_once_with(context, "AJSHDFJASHGDFJASHGDFJASHGBFD", root_dir + "/2021.10.03 " + folder_name + "/" + file_name)
+        self.photo_bot.downloadFile.assert_not_called()
+        self.update.message.reply_text.assert_called_once_with("Нужно указать комментарий")
+
+    def test_receive_update_single_document_date_from_caption(self):
+        # GIVEN
+        self.update.message.caption = '2021.01.01 Зарядье'
+
+        # WHEN
+        self.photo_bot.receiveUpdate(self.update, self.context)
+
+        # THEN
+        self.photo_bot.downloadFile.assert_called_once_with(self.context,
+                                                            self.update.message.document.file_id,
+                                                            self.root_dir + "/" + self.update.message.caption + "/" + self.update.message.document.file_name)
+
+    def test_receive_update_single_document_date_from_file(self):
+        # GIVEN
+        self.update.message.caption = 'Зарядье'
+
+        # WHEN
+        self.photo_bot.receiveUpdate(self.update, self.context)
+
+        # THEN
+        self.photo_bot.downloadFile.assert_called_once_with(self.context,
+                                                            self.update.message.document.file_id,
+                                                            self.root_dir + "/2021.10.03 " + self.update.message.caption + "/" + self.update.message.document.file_name)

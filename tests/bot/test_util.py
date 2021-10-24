@@ -1,7 +1,7 @@
-# declaringa a class
 import json
 
-class obj:
+
+class Obj:
 
     # constructor
     def __init__(self, dict1):
@@ -11,5 +11,4 @@ class obj:
 def dict2obj(dict1):
     # using json.loads method and passing json.dumps
     # method and custom object hook as arguments
-    return json.loads(json.dumps(dict1), object_hook=obj)
-
+    return json.loads(json.dumps(dict1), object_hook=Obj)

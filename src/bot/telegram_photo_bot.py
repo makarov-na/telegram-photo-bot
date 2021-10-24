@@ -18,11 +18,15 @@ class PhotoBot:
 
     def receiveUpdate(self, update: Update, context: CallbackContext) -> None:
         self._logger.info(update)
+        if not update.message.caption or not update.message.caption.strip():
+            update.message.reply_text("Нужно указать комментарий")
+            return
+
         update_file_name, update_file_id, update_comment = None, None, None
         if update.message.document:
             update_file_name = update.message.document.file_name
             update_file_id = update.message.document.file_id
-            update_comment = update.message.caption
+            update_comment = update.message.caption.strip()
 
         if not update_file_name or not update_file_id or not update_comment:
             return
@@ -53,7 +57,7 @@ class PhotoBot:
             raise DateNotFoundException('Date not found in post data')
 
         if not Path(self._root_dir).is_dir():
-            raise RootFolderDoesNotExist
+            raise RootFolderDoesNotExistException
 
         full_path = self._root_dir + "/" + post_dir
         if not Path(full_path).is_dir():
@@ -68,7 +72,11 @@ class DateNotFoundException(Exception):
     pass
 
 
-class RootFolderDoesNotExist(Exception):
+class RootFolderDoesNotExistException(Exception):
+    pass
+
+
+class CommentIsEmptyException(Exception):
     pass
 
 
