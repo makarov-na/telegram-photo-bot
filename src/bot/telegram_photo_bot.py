@@ -53,8 +53,6 @@ class PhotoBot:
         except FileNotFoundError:
             update.message.reply_text("Не смог сохранить файл")
 
-        # update.message.reply_text(update.message.text)
-
     def createFullLocalName(self, path, update_file_name):
         full_local_name = path + "/" + update_file_name
         return full_local_name
@@ -87,6 +85,7 @@ class PhotoBot:
         return self._media_group_path_cache.get(media_group_id)
 
     def setPathForMediaGroup(self, media_group_id, path):
+        self._media_group_path_cache.clear()
         self._media_group_path_cache[media_group_id] = path
 
 
