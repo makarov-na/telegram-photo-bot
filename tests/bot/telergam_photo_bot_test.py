@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, call
 
-from bot.telegram_photo_bot import PhotoBot
+from bot.telegram_photo_bot import PhotoBot, CommentIsEmptyException
 from tests.bot.test_data import get_test_post_with_document, get_test_posts_for_multiple_documents_in_one_post
 
 
@@ -24,8 +24,8 @@ class TestPhotoBot(unittest.TestCase):
         second_update.message.reply_text = MagicMock()
 
         # WHEN
-        self.photo_bot.receiveUpdate(first_update, self.context)
-        self.photo_bot.receiveUpdate(second_update, self.context)
+        self.assertRaises(CommentIsEmptyException, self.photo_bot.receiveUpdate, first_update, self.context)
+        self.assertRaises(CommentIsEmptyException, self.photo_bot.receiveUpdate, second_update, self.context)
 
         # THEN
         self.photo_bot.downloadFile.assert_not_called()
@@ -75,7 +75,7 @@ class TestPhotoBot(unittest.TestCase):
         self.update.message.reply_text = MagicMock()
 
         # WHEN
-        self.photo_bot.receiveUpdate(self.update, self.context)
+        self.assertRaises(CommentIsEmptyException, self.photo_bot.receiveUpdate, self.update, self.context)
 
         # THEN
         self.photo_bot.downloadFile.assert_not_called()

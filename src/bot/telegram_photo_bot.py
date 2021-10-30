@@ -17,49 +17,40 @@ class PhotoBot:
         self._logger = logging.getLogger(__name__)
         self._root_dir = root_dir
         self._media_group_path_cache = {}
+        if not Path(self._root_dir).is_dir():
+            raise RootFolderDoesNotExistException
 
     def receiveUpdate(self, update: Update, context: CallbackContext) -> None:
 
         self._logger.info(update)
 
-        update_file_name, update_file_id = None, None
-        if update.message.document:
-            update_file_name = update.message.document.file_name
-            update_file_id = update.message.document.file_id
-        if not update_file_name or not update_file_id:
-            update.message.reply_text("Нет файлов в сообщении")
+        update_file_name = self._getFileNameFromMessage(update.message)
+        update_file_id = self._getFileIdFromMessage(update.message)
+
+        path = self._getCachedDirectoryNameForPost(update.message)
+
+        if path:
+            self._downloadFileForPath(update.message, context, update_file_id, update_file_name, path)
             return
 
-        path = None
-        if hasattr(update.message, 'media_group_id') and not update.message.caption:
-            path = self.getPathForMediaGroup(update.message.media_group_id)
+        update_comment = self._getCommentFromUpdateMessage(update.message)
 
-        try:
-            if path:
-                self.downloadFile(context, update_file_id, self.createFullLocalName(path, update_file_name))
-                return
-            if not update.message.caption or not update.message.caption.strip():
-                update.message.reply_text("Нужно указать комментарий")
-                return
-            update_comment = update.message.caption.strip()
+        path = self._createDirectoryNameForPost(update.message, update_file_name, update_comment)
 
-            path = self.makeDirForPost(update_file_name, update_comment)
-            if hasattr(update.message, 'media_group_id'):
-                self.setPathForMediaGroup(update.message.media_group_id, path)
+        if path:
+            self._setCachedDirectoryNameForPost(path, update.message)
+            self._downloadFileForPath(update.message, context, update_file_id, update_file_name, path)
 
-            self.downloadFile(context, update_file_id, self.createFullLocalName(path, update_file_name))
-        except DateNotFoundException:
-            update.message.reply_text("Не смог найти дату события")
-        except FileNotFoundError:
-            update.message.reply_text("Не смог сохранить файл")
+    def _setCachedDirectoryNameForPost(self, path, message):
+        if hasattr(message, 'media_group_id'):
+            self.setPathForMediaGroup(message.media_group_id, path)
 
     def createFullLocalName(self, path, update_file_name):
         full_local_name = path + "/" + update_file_name
         return full_local_name
 
-    def makeDirForPost(self, update_file_name: str, update_comment: str):
+    def _createDirectoryNameForPost(self, message, update_file_name: str, update_comment: str):
 
-        # check group post dir exist
         post_dir = None
         if DateUtil.isStartWithDate(update_comment):
             post_dir = update_comment
@@ -68,18 +59,11 @@ class PhotoBot:
             post_dir = DateUtil.makeDateString(update_file_name) + " " + update_comment
 
         if not post_dir:
+            message.reply_text("Не смог найти дату события")
             raise DateNotFoundException('Date not found in post data')
 
-        if not Path(self._root_dir).is_dir():
-            raise RootFolderDoesNotExistException
-
         full_path = self._root_dir + "/" + post_dir
-        if not Path(full_path).is_dir():
-            Path(full_path).mkdir()
         return full_path
-
-    def downloadFile(self, context, update_file_id, full_local_name):
-        context.bot.getFile(update_file_id).download(full_local_name)
 
     def getPathForMediaGroup(self, media_group_id):
         return self._media_group_path_cache.get(media_group_id)
@@ -87,6 +71,64 @@ class PhotoBot:
     def setPathForMediaGroup(self, media_group_id, path):
         self._media_group_path_cache.clear()
         self._media_group_path_cache[media_group_id] = path
+
+    def hasCachedPath(self, message):
+        path = None
+        if hasattr(message, 'media_group_id'):
+            path = self.getPathForMediaGroup(message.media_group_id)
+        if path:
+            return True
+        return False
+
+    def _getCommentFromUpdateMessage(self, message):
+        if not message.caption or not message.caption.strip():
+            message.reply_text("Нужно указать комментарий")
+            raise CommentIsEmptyException()
+        return message.caption.strip()
+
+    def _getFileNameFromMessage(self, message):
+        update_file_name = None
+        if message.document:
+            update_file_name = message.document.file_name
+        if not update_file_name:
+            message.reply_text("Нет файлов в сообщении")
+            raise FileNameNotFoundException
+        return update_file_name
+
+    def _getFileIdFromMessage(self, message):
+        update_file_id = None
+        if message.document:
+            update_file_id = message.document.file_id
+        if not update_file_id:
+            message.reply_text("Нет файлов в сообщении")
+            raise FileIdNotFoundException
+        return update_file_id
+
+    def _getCachedDirectoryNameForPost(self, message):
+        path = None
+        if hasattr(message, 'media_group_id'):
+            path = self.getPathForMediaGroup(message.media_group_id)
+        return path
+
+    def _downloadFileForPath(self, message, context, update_file_id, update_file_name, path):
+        if not Path(path).is_dir():
+            Path(path).mkdir()
+        try:
+            self.downloadFile(context, update_file_id, self.createFullLocalName(path, update_file_name))
+        except Exception as exc:
+            message.reply_text("Не смог сохранить файл")
+            raise exc
+
+    def downloadFile(self, context, update_file_id, full_local_name):
+        context.bot.getFile(update_file_id).download(full_local_name)
+
+
+class FileIdNotFoundException(Exception):
+    pass
+
+
+class FileNameNotFoundException(Exception):
+    pass
 
 
 class DateNotFoundException(Exception):
