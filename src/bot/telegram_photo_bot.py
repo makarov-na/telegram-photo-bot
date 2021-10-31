@@ -43,9 +43,9 @@ class PhotoBot:
 
     def _setCachedDirectoryNameForPost(self, path, message):
         if hasattr(message, 'media_group_id'):
-            self.setPathForMediaGroup(message.media_group_id, path)
+            self._setPathForMediaGroup(message.media_group_id, path)
 
-    def createFullLocalName(self, path, update_file_name):
+    def _createFullLocalName(self, path, update_file_name):
         full_local_name = path + "/" + update_file_name
         return full_local_name
 
@@ -65,24 +65,16 @@ class PhotoBot:
         full_path = self._root_dir + "/" + post_dir
         return full_path
 
-    def getPathForMediaGroup(self, media_group_id):
+    def _getPathForMediaGroup(self, media_group_id):
         return self._media_group_path_cache.get(media_group_id)
 
-    def setPathForMediaGroup(self, media_group_id, path):
+    def _setPathForMediaGroup(self, media_group_id, path):
         self._media_group_path_cache.clear()
         self._media_group_path_cache[media_group_id] = path
 
-    def hasCachedPath(self, message):
-        path = None
-        if hasattr(message, 'media_group_id'):
-            path = self.getPathForMediaGroup(message.media_group_id)
-        if path:
-            return True
-        return False
-
     def _getCommentFromUpdateMessage(self, message):
         if not message.caption or not message.caption.strip():
-            message.reply_text("Нужно указать комментарий")
+            message.reply_text("Нужно указать название для поста")
             raise CommentIsEmptyException()
         return message.caption.strip()
 
@@ -91,7 +83,7 @@ class PhotoBot:
         if message.document:
             update_file_name = message.document.file_name
         if not update_file_name:
-            message.reply_text("Нет файлов в сообщении")
+            message.reply_text("Нет файлов в посте")
             raise FileNameNotFoundException
         return update_file_name
 
@@ -100,21 +92,21 @@ class PhotoBot:
         if message.document:
             update_file_id = message.document.file_id
         if not update_file_id:
-            message.reply_text("Нет файлов в сообщении")
+            message.reply_text("Нет файлов в посте")
             raise FileIdNotFoundException
         return update_file_id
 
     def _getCachedDirectoryNameForPost(self, message):
         path = None
         if hasattr(message, 'media_group_id'):
-            path = self.getPathForMediaGroup(message.media_group_id)
+            path = self._getPathForMediaGroup(message.media_group_id)
         return path
 
     def _downloadFileForPath(self, message, context, update_file_id, update_file_name, path):
         if not Path(path).is_dir():
             Path(path).mkdir()
         try:
-            self.downloadFile(context, update_file_id, self.createFullLocalName(path, update_file_name))
+            self.downloadFile(context, update_file_id, self._createFullLocalName(path, update_file_name))
         except Exception as exc:
             message.reply_text("Не смог сохранить файл")
             raise exc

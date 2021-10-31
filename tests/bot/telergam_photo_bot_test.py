@@ -29,8 +29,8 @@ class TestPhotoBot(unittest.TestCase):
 
         # THEN
         self.photo_bot.downloadFile.assert_not_called()
-        first_update.message.reply_text.assert_called_once_with("Нужно указать комментарий")
-        second_update.message.reply_text.assert_called_once_with("Нужно указать комментарий")
+        first_update.message.reply_text.assert_called_once_with("Нужно указать название для поста")
+        second_update.message.reply_text.assert_called_once_with("Нужно указать название для поста")
 
     def test_receive_update_multiple_documents_in_one_post_date_from_caption(self):
         # GIVEN
@@ -79,7 +79,7 @@ class TestPhotoBot(unittest.TestCase):
 
         # THEN
         self.photo_bot.downloadFile.assert_not_called()
-        self.update.message.reply_text.assert_called_once_with("Нужно указать комментарий")
+        self.update.message.reply_text.assert_called_once_with("Нужно указать название для поста")
 
     def test_receive_update_single_document_date_from_caption(self):
         # GIVEN
