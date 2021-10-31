@@ -1,15 +1,8 @@
 import logging
 from pathlib import Path
-
 from telegram import Update
-from telegram.ext import Updater, MessageHandler, Filters, CallbackContext
-
+from telegram.ext import CallbackContext
 from bot.date_utils import DateUtil
-
-# Enable logging
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
-)
 
 
 class PhotoBot:
@@ -133,16 +126,3 @@ class RootFolderDoesNotExistException(Exception):
 
 class CommentIsEmptyException(Exception):
     pass
-
-
-def main() -> None:
-    bot = PhotoBot("/tmp/photo")
-    updater = Updater("2033916236:AAFQ1EyIG8oZbNF_XACGqYkKuepvqH8Cpuc")
-    dispatcher = updater.dispatcher
-    dispatcher.add_handler(MessageHandler(Filters.all & ~Filters.command, bot.receiveUpdate))
-    updater.start_polling()
-    updater.idle()
-
-
-if __name__ == '__main__':
-    main()
