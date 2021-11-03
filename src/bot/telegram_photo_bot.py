@@ -9,7 +9,8 @@ class PhotoBot:
     def __init__(self, root_dir) -> None:
         self._logger = logging.getLogger(__name__)
         self._root_dir = root_dir
-        self._media_group_path_cache = {}
+        self._max_cache_time_in_sec = 120
+        self._cached_dir_info = {}
         if not Path(self._root_dir).is_dir():
             raise RootFolderDoesNotExistException
 
@@ -34,10 +35,6 @@ class PhotoBot:
             self._setCachedDirectoryNameForPost(path, update.message)
             self._downloadFileForPath(update.message, context, update_file_id, update_file_name, path)
 
-    def _setCachedDirectoryNameForPost(self, path, message):
-        if hasattr(message, 'media_group_id'):
-            self._setPathForMediaGroup(message.media_group_id, path)
-
     def _createFullLocalName(self, path, update_file_name):
         full_local_name = path + "/" + update_file_name
         return full_local_name
@@ -57,13 +54,6 @@ class PhotoBot:
 
         full_path = self._root_dir + "/" + post_dir
         return full_path
-
-    def _getPathForMediaGroup(self, media_group_id):
-        return self._media_group_path_cache.get(media_group_id)
-
-    def _setPathForMediaGroup(self, media_group_id, path):
-        self._media_group_path_cache.clear()
-        self._media_group_path_cache[media_group_id] = path
 
     def _getCommentFromUpdateMessage(self, message):
         if not message.caption or not message.caption.strip():
@@ -91,9 +81,16 @@ class PhotoBot:
 
     def _getCachedDirectoryNameForPost(self, message):
         path = None
-        if hasattr(message, 'media_group_id'):
-            path = self._getPathForMediaGroup(message.media_group_id)
+        if message.date and self._cached_dir_info:
+            if message.date - self._cached_dir_info['date'] <= self._max_cache_time_in_sec:
+                path = self._cached_dir_info['dir']
+            else:
+                self._cached_dir_info = None
         return path
+
+    def _setCachedDirectoryNameForPost(self, path, message):
+        if message.date:
+            self._cached_dir_info = {'dir': path, 'date': message.date}
 
     def _downloadFileForPath(self, message, context, update_file_id, update_file_name, path):
         if not Path(path).is_dir():

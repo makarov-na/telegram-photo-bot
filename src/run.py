@@ -1,7 +1,9 @@
+import getopt
+import logging
+import sys
+
 from telegram.ext import Updater, MessageHandler, Filters
 from bot.telegram_photo_bot import PhotoBot
-import sys, getopt
-import logging
 
 # Enable logging
 logging.basicConfig(
@@ -10,7 +12,6 @@ logging.basicConfig(
 
 
 def main(argv) -> None:
-
     logger = logging.getLogger(__name__)
     help_string = 'run.py \n' \
                   '-k, --key <api key>\n' \
@@ -18,9 +19,12 @@ def main(argv) -> None:
 
     try:
         opts, args = getopt.getopt(argv, "hk:p:", ["key=", "path="])
+        if len(opts) == 0 or len(opts) > 2:
+            print(help_string)
+            sys.exit(2)
     except getopt.GetoptError:
         print(help_string)
-        return
+        sys.exit(2)
 
     api_key, root_path = None, None
 
@@ -34,7 +38,7 @@ def main(argv) -> None:
             root_path = arg
 
     logger.info("Start with key={} and path={}".format(api_key, root_path))
-    
+
     bot = PhotoBot(root_path)
     updater = Updater(api_key)
     dispatcher = updater.dispatcher

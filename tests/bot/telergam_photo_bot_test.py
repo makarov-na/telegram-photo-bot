@@ -14,6 +14,48 @@ class TestPhotoBot(unittest.TestCase):
         self.context = MagicMock()
         self.update = get_test_post_with_document()
 
+    def test_receive_update_multiple_documents_in_multiple_post_after_timeout(self):
+
+        # GIVEN
+        first_update = get_test_posts_for_multiple_documents_in_one_post()[0]
+        second_update = get_test_posts_for_multiple_documents_in_one_post()[1]
+        second_update.message.caption = None
+        delattr(second_update.message, 'media_group_id')
+        second_update.message.date = first_update.message.date + self.photo_bot._max_cache_time_in_sec * 2
+        second_update.message.reply_text = MagicMock()
+
+        # WHEN
+        self.photo_bot.receiveUpdate(first_update, self.context)
+        self.assertRaises(CommentIsEmptyException, self.photo_bot.receiveUpdate, second_update, self.context)
+
+        self.photo_bot.downloadFile.assert_has_calls([call(self.context,
+                                                           first_update.message.document.file_id,
+                                                           self.root_dir + "/2021.10.03 " + first_update.message.caption + "/" + first_update.message.document.file_name)])
+        second_update.message.reply_text.assert_called_once_with("Нужно указать название для поста")
+
+    def test_receive_update_multiple_documents_in_one_post_splitted_date_from_file(self):
+        # when documents count in post more than ten post splits to multiple posts with ten files in each post
+        # Only first post updates has media_group_id (same). Other posts updates doesnt have media_group_id
+
+        # GIVEN
+        first_update = get_test_posts_for_multiple_documents_in_one_post()[0]
+        second_update = get_test_posts_for_multiple_documents_in_one_post()[1]
+        second_update.message.caption = None
+        delattr(second_update.message, 'media_group_id')
+        second_update.message.date = first_update.message.date + + self.photo_bot._max_cache_time_in_sec
+
+        # WHEN
+        self.photo_bot.receiveUpdate(first_update, self.context)
+        self.photo_bot.receiveUpdate(second_update, self.context)
+
+        self.photo_bot.downloadFile.assert_has_calls([call(self.context,
+                                                           first_update.message.document.file_id,
+                                                           self.root_dir + "/2021.10.03 " + first_update.message.caption + "/" + first_update.message.document.file_name),
+                                                      call(self.context,
+                                                           second_update.message.document.file_id,
+                                                           self.root_dir + "/2021.10.03 " + first_update.message.caption + "/" + second_update.message.document.file_name)
+                                                      ])
+
     def test_receive_update_multiple_documents_in_one_post_without_caption(self):
         # GIVEN
         first_update = get_test_posts_for_multiple_documents_in_one_post()[0]

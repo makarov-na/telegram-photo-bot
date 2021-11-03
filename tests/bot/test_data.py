@@ -4,6 +4,7 @@ from tests.bot.test_util import dict2obj
 def get_test_post_with_document():
     return dict2obj({
         'message': {
+            'date': 1635963509,
             'delete_chat_photo': False,
             'document': {
                 'file_name': 'IMG_20211003_133744.jpg',
@@ -31,6 +32,7 @@ def get_test_posts_for_multiple_documents_in_one_post():
     result.append(
         dict2obj({
             'message': {
+                'date': 1635963509,
                 'delete_chat_photo': False,
                 'media_group_id': '13075151643656746',
                 'document': {
@@ -55,6 +57,7 @@ def get_test_posts_for_multiple_documents_in_one_post():
     result.append(
         dict2obj({
             'message': {
+                'date': 1635963509,
                 'delete_chat_photo': False,
                 'media_group_id': '13075151643656746',
                 'document': {
