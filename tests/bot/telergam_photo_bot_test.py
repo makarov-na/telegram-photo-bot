@@ -1,4 +1,5 @@
 import unittest
+from datetime import timedelta, datetime
 from unittest.mock import MagicMock, call
 
 from bot.telegram_photo_bot import PhotoBot, CommentIsEmptyException
@@ -21,7 +22,7 @@ class TestPhotoBot(unittest.TestCase):
         second_update = get_test_posts_for_multiple_documents_in_one_post()[1]
         second_update.message.caption = None
         delattr(second_update.message, 'media_group_id')
-        second_update.message.date = first_update.message.date + self.photo_bot._max_cache_time_in_sec * 2
+        second_update.message.date = datetime.fromtimestamp(first_update.message.date.timestamp() + self.photo_bot._max_cache_time_in_sec * 2)
         second_update.message.reply_text = MagicMock()
 
         # WHEN
@@ -42,7 +43,8 @@ class TestPhotoBot(unittest.TestCase):
         second_update = get_test_posts_for_multiple_documents_in_one_post()[1]
         second_update.message.caption = None
         delattr(second_update.message, 'media_group_id')
-        second_update.message.date = first_update.message.date + + self.photo_bot._max_cache_time_in_sec
+
+        second_update.message.date = datetime.fromtimestamp(first_update.message.date.timestamp() + self.photo_bot._max_cache_time_in_sec)
 
         # WHEN
         self.photo_bot.receiveUpdate(first_update, self.context)

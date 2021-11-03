@@ -82,7 +82,7 @@ class PhotoBot:
     def _getCachedDirectoryNameForPost(self, message):
         path = None
         if message.date and self._cached_dir_info:
-            if message.date - self._cached_dir_info['date'] <= self._max_cache_time_in_sec:
+            if message.date.timestamp() - self._cached_dir_info['date'].timestamp() <= self._max_cache_time_in_sec:
                 path = self._cached_dir_info['dir']
             else:
                 self._cached_dir_info = None

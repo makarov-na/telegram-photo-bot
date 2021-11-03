@@ -1,4 +1,5 @@
 from tests.bot.test_util import dict2obj
+from datetime import timedelta, datetime
 
 
 def get_test_post_with_document():
@@ -79,4 +80,6 @@ def get_test_posts_for_multiple_documents_in_one_post():
 
             'update_id': 462499640
         }))
+    result[0].message.date = datetime.fromtimestamp(result[0].message.date)
+    result[1].message.date = datetime.fromtimestamp(result[1].message.date)
     return result
