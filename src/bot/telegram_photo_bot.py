@@ -25,6 +25,7 @@ class PhotoBot:
 
         if path:
             self._downloadFileForPath(update.message, context, update_file_id, update_file_name, path)
+            self._replySuccessSavedToChat(update, update_file_name, path)
             return
 
         update_comment = self._getCommentFromUpdateMessage(update.message)
@@ -34,6 +35,12 @@ class PhotoBot:
         if path:
             self._setCachedDirectoryNameForPost(path, update.message)
             self._downloadFileForPath(update.message, context, update_file_id, update_file_name, path)
+
+        self._replySuccessSavedToChat(update, update_file_name, path)
+
+    def _replySuccessSavedToChat(self, update, update_file_name, path):
+
+        update.message.reply_text("Сохранил {}/{}".format(path.replace(self._root_dir+'/', ''), update_file_name))
 
     def _createFullLocalName(self, path, update_file_name):
         full_local_name = path + "/" + update_file_name

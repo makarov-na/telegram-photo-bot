@@ -1,9 +1,11 @@
+from unittest.mock import MagicMock
+
 from tests.bot.test_util import dict2obj
 from datetime import timedelta, datetime
 
 
 def get_test_post_with_document():
-    return dict2obj({
+    post = dict2obj({
         'message': {
             'date': 1635963509,
             'delete_chat_photo': False,
@@ -32,6 +34,8 @@ def get_test_post_with_document():
 
         'update_id': 462499639
     })
+    post.message.reply_text = MagicMock()
+    return post
 
 
 def get_test_posts_for_multiple_documents_in_one_post():
@@ -100,4 +104,6 @@ def get_test_posts_for_multiple_documents_in_one_post():
         }))
     result[0].message.date = datetime.fromtimestamp(result[0].message.date)
     result[1].message.date = datetime.fromtimestamp(result[1].message.date)
+    result[0].message.reply_text = MagicMock()
+    result[1].message.reply_text = MagicMock()
     return result

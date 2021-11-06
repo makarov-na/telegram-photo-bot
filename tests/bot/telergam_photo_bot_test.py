@@ -16,6 +16,7 @@ class TestPhotoBot(unittest.TestCase):
         self.photo_bot.downloadFile = MagicMock()
         self.context = MagicMock()
         self.update = get_test_post_with_document()
+        self.update.message.reply_text = MagicMock()
 
     def test_receive_update_multiple_documents_in_multiple_post_after_timeout(self):
         # GIVEN
@@ -113,11 +114,12 @@ class TestPhotoBot(unittest.TestCase):
                                                            second_update.message.document.file_id,
                                                            self.root_dir + "/2021.10.03 " + first_update.message.caption + "/" + second_update.message.document.file_name)
                                                       ])
+        first_update.message.reply_text.assert_called_once_with("Сохранил 2021.10.03 " + first_update.message.caption + "/" + first_update.message.document.file_name)
+        second_update.message.reply_text.assert_called_once_with("Сохранил 2021.10.03 " + first_update.message.caption + "/" + second_update.message.document.file_name)
 
     def test_receive_update_single_document_without_caption(self):
         # GIVEN
         self.update.message.caption = None
-        self.update.message.reply_text = MagicMock()
 
         # WHEN
         self.assertRaises(CommentIsEmptyException, self.photo_bot.receiveUpdate, self.update, self.context)
@@ -137,6 +139,7 @@ class TestPhotoBot(unittest.TestCase):
         self.photo_bot.downloadFile.assert_called_once_with(self.context,
                                                             self.update.message.document.file_id,
                                                             self.root_dir + "/" + self.update.message.caption + "/" + self.update.message.document.file_name)
+        self.update.message.reply_text.assert_called_once_with("Сохранил " + self.update.message.caption + "/" + self.update.message.document.file_name)
 
     def test_receive_update_single_document_date_from_file(self):
         # GIVEN
@@ -149,3 +152,4 @@ class TestPhotoBot(unittest.TestCase):
         self.photo_bot.downloadFile.assert_called_once_with(self.context,
                                                             self.update.message.document.file_id,
                                                             self.root_dir + "/2021.10.03 " + self.update.message.caption + "/" + self.update.message.document.file_name)
+        self.update.message.reply_text.assert_called_once_with("Сохранил 2021.10.03 " + self.update.message.caption + "/" + self.update.message.document.file_name)
