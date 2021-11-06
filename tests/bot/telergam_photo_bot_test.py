@@ -2,6 +2,8 @@ import unittest
 from datetime import timedelta, datetime
 from unittest.mock import MagicMock, call
 
+from telegram import MessageEntity
+
 from bot.telegram_photo_bot import PhotoBot, CommentIsEmptyException
 from tests.bot.test_data import get_test_post_with_document, get_test_posts_for_multiple_documents_in_one_post
 
@@ -15,8 +17,34 @@ class TestPhotoBot(unittest.TestCase):
         self.context = MagicMock()
         self.update = get_test_post_with_document()
 
-    def test_receive_update_multiple_documents_in_multiple_post_after_timeout(self):
+    def test_doest_reply_in_group_chat_without_mention(self):
+        # GIVEN
+        self.update.message.chat.type = 'group'
+        self.update.message.entities = []
+        self.update.message.document = None
+        self.update.message.reply_text = MagicMock()
 
+        # WHEN
+        self.photo_bot.receiveUpdate(self.update, self.context)
+
+        # THEN
+        self.update.message.reply_text.assert_not_called()
+
+    def test_reply_in_group_chat_with_mention(self):
+        # GIVEN
+        self.update.message.chat.type = 'group'
+        self.update.message.entities = [MessageEntity(type='mention', offset=0, length=0)]
+
+        # WHEN
+        self.photo_bot.receiveUpdate(self.update, self.context)
+
+        # THEN
+        # THEN
+        self.photo_bot.downloadFile.assert_called_once_with(self.context,
+                                                            self.update.message.document.file_id,
+                                                            self.root_dir + "/2021.10.03 " + self.update.message.caption + "/" + self.update.message.document.file_name)
+
+    def test_receive_update_multiple_documents_in_multiple_post_after_timeout(self):
         # GIVEN
         first_update = get_test_posts_for_multiple_documents_in_one_post()[0]
         second_update = get_test_posts_for_multiple_documents_in_one_post()[1]

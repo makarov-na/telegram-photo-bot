@@ -21,6 +21,12 @@ def get_test_post_with_document():
                 'file_size': 10474747,
                 'file_unique_id': 'AEYGFAJWHGEFJASGD'
             },
+            'chat': {
+                'last_name': 'Test',
+                'type': 'private',
+                'first_name': 'Test',
+                'id': 634737640
+            },
             'caption': 'folder_name'
         },
 
@@ -50,6 +56,12 @@ def get_test_posts_for_multiple_documents_in_one_post():
                     'file_size': 10474747,
                     'file_unique_id': 'AEYGFAJWHGEFJASGD'
                 },
+                'chat': {
+                    'last_name': 'Test',
+                    'type': 'private',
+                    'first_name': 'Test',
+                    'id': 634737640
+                },
                 'caption': 'folder_name'
             },
 
@@ -74,6 +86,12 @@ def get_test_posts_for_multiple_documents_in_one_post():
                     'mime_type': 'image/jpeg',
                     'file_size': 10474747,
                     'file_unique_id': 'sjfdhjkdh'
+                },
+                'chat': {
+                    'last_name': 'Test',
+                    'type': 'private',
+                    'first_name': 'Test',
+                    'id': 634737640
                 },
                 'caption': 'folder_name'
             },

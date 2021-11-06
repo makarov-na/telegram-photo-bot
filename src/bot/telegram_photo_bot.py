@@ -18,6 +18,9 @@ class PhotoBot:
 
         self._logger.info(update)
 
+        if not self._isPostForBot(update):
+            return
+
         update_file_name = self._getFileNameFromMessage(update.message)
         update_file_id = self._getFileIdFromMessage(update.message)
 
@@ -103,6 +106,17 @@ class PhotoBot:
 
     def downloadFile(self, context, update_file_id, full_local_name):
         context.bot.getFile(update_file_id).download(full_local_name)
+
+    def _isPostForBot(self, update):
+        if update.message.chat.type == 'private':
+            return True
+        if update.message.chat.type == 'group' and self.isBotMentionedInPost(update):
+            return True
+        return False
+
+    def isBotMentionedInPost(self, update):
+        mentioned = [e for e in update.message.entities if e.type == 'mention']
+        return len(mentioned) > 0
 
 
 class FileIdNotFoundException(Exception):
