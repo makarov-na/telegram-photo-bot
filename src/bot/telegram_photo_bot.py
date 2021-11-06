@@ -18,9 +18,6 @@ class PhotoBot:
 
         self._logger.info(update)
 
-        if not self._isPostForBot(update):
-            return
-
         update_file_name = self._getFileNameFromMessage(update.message)
         update_file_id = self._getFileIdFromMessage(update.message)
 
