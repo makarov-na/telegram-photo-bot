@@ -7,7 +7,11 @@ from bot.telegram_photo_bot import PhotoBot
 
 # Enable logging
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO,
+    handlers=[
+        logging.FileHandler("telegram-photo-bot.log"),
+        logging.StreamHandler()
+    ]
 )
 
 
