@@ -1,8 +1,6 @@
 import unittest
-from datetime import timedelta, datetime
+from datetime import datetime
 from unittest.mock import MagicMock, call
-
-from telegram import MessageEntity
 
 from bot.telegram_photo_bot import PhotoBot, CommentIsEmptyException
 from tests.bot.test_data import get_test_post_with_document, get_test_posts_for_multiple_documents_in_one_post
